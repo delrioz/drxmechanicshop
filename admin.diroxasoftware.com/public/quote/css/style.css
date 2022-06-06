@@ -1,0 +1,39 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#add-extra-cost-btn {
+    background: #13ce8a;
+    color: #fff;
+    padding: 10px;
+    outline: none;
+    border: none;
+    border-radius: 5px;
+}
+
+#extra-cost-container th {
+    text-align: left;
+}
+
+#extra-cost-container input {
+    margin-right: 10px;
+    padding: 10px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    outline: none;
+}
+
+.product-name {
+    width: 200px;
+}
+
+.price,
+.price-vat,
+.remove-btn {
+    width: 100px;
+}
+
+.remove-btn {
+    color: #fff;
+    background: #ea483b;
+}

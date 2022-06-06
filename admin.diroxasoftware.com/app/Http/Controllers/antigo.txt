@@ -1,0 +1,463 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\sales;
+use App\salesReportsGroups;
+use App\salesbycard;
+use App\salesbycash;
+use App\salesreportsmonthly;
+use App\salesreportsgroupsByDataRange;
+use DB;
+
+
+class SalesReportsController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    public function index()
+    {   
+
+        // return   $salesreportsmonthly = salesreportsmonthly::orderBy('totalSalesAmount', 'DESC')->get();
+
+        $salesReportsGroups = salesReportsGroups::all()->first();
+        $totalEarnings = $salesReportsGroups->total;
+        $NumberOfSales = $salesReportsGroups->QuantitySales;
+        $AVGtotalEarnings = $salesReportsGroups->AVGtotalAmount;
+        $totalVAT = $salesReportsGroups->totalVAT;
+        $totalDiscount = $salesReportsGroups->totalDiscount;
+        
+
+        
+        // info sales by card
+        $reports_sales_card = salesbycard::all()->first();
+        $AmountSalesWithVAT = $reports_sales_card->AmountSalesWithVAT; 
+        $AmountSalesWithoutVAT = $reports_sales_card->AmountSalesWithoutVAT; 
+        $AmountSalesCardVAT = $reports_sales_card->AmountSalesCardVAT; 
+        $AmountSalesCardDiscount = $reports_sales_card->AmountSalesCardDiscount; 
+        $qtdSellByCard = $reports_sales_card->NumberOfSales;
+
+        // info sales by cash
+        $reports_sales_cash = salesbycash::all()->first();
+        $AmountSalesCashWithVAT = $reports_sales_cash->AmountSalesCashWithVAT; 
+        $AmountSalesCashWithoutVAT = $reports_sales_cash->AmountSalesCashWithoutVAT; 
+        $AmountSalesCashVAT = $reports_sales_cash->AmountSalesCashVAT; 
+        $AmountSalesCashDiscount = $reports_sales_cash->AmountSalesCashDiscount; 
+        $qtdSellByCash = $reports_sales_cash->NumberOfSalesCash;
+
+        $totalEarnings = number_format($totalEarnings, 2, '.',',');
+        $AVGtotalEarnings = number_format($AVGtotalEarnings, 2, '.',',');
+        
+        $AmountSalesWithVAT = number_format($AmountSalesWithVAT, 2, '.',',');
+        $AmountSalesWithoutVAT = number_format($AmountSalesWithoutVAT, 2, '.',',');
+        $AmountSalesCardVAT = number_format($AmountSalesCardVAT, 2, '.',',');
+        $AmountSalesCardDiscount = number_format($AmountSalesCardDiscount, 2, '.',',');
+
+        $AmountSalesCashWithVAT = number_format($AmountSalesCashWithVAT, 2, '.',',');
+        $AmountSalesCashWithoutVAT = number_format($AmountSalesCashWithoutVAT, 2, '.',',');
+        $AmountSalesCashDiscount = number_format($AmountSalesCashDiscount, 2, '.',',');
+        $AmountSalesCashVAT = number_format($AmountSalesCashVAT, 2, '.',',');
+
+                
+        return view('sections.reports.sales.index',
+        compact('totalEarnings', 'NumberOfSales', 'AVGtotalEarnings', 
+        'totalVAT',  'totalDiscount', 'AmountSalesWithVAT','AmountSalesWithoutVAT', 'qtdSellByCard', 'reports_sales_cash',
+        'AmountSalesCashWithVAT', 'AmountSalesCashWithoutVAT', 'AmountSalesCashVAT', 'AmountSalesCashDiscount','qtdSellByCash',
+        'qtdSellByCash', 'AmountSalesCardVAT', 'AmountSalesCardDiscount'));
+    }
+
+
+    public function searchIt(Request $request)
+    {
+
+
+        // return $request;
+
+        $tipo = $request->all();
+        if($tipo == null){
+            return redirect()
+            ->route('sales.reports.index')
+            ->with('status', 'No records was found on this range');
+        }
+
+        else {
+        // $agora = date('Y/d/m');
+        // return $less7days =  date('Y/d/m', strtotime('7 days', strtotime($agora)));
+
+        if(isset($request->QuicklyOption)){
+            $options = $request->QuicklyOption;
+            if($options == 'sevenDays'){
+                $start =date('Y-m-d', strtotime('-1 week')) ;
+                $end =  date('Y-m-d');
+
+            }
+            else if($options == 'lastmonth'){
+                $start =date('Y-m-d', strtotime('-1 month')) ;
+                $end =  date('Y-m-d');
+ 
+            }
+            else if($options == 'lastday'){
+                
+                $start = date('Y-m-d', strtotime('-1 day'));
+                $end =  date('Y-m-d');
+            }
+            else if($options == 'today'){
+                $start = date('Y-m-d');
+                $end =  date('Y-m-d');
+                
+            }
+
+        }
+
+        else {
+
+        // return 1;
+        $dataComecoPadraoDateTime = $request->dataComecoPadraoDateTime;
+        $dataFimPadraoDateTime =$request->dataFimPadraoDateTime;
+        
+        if($request->dataComecoPadraoDateTime == null || $request->dataFimPadraoDateTime == null){
+            return redirect()->back();
+        }
+
+        // filtrando entre duas datas
+        $start= date($dataComecoPadraoDateTime, time()); 
+        $end= date($dataFimPadraoDateTime, time()); 
+        $result = sales::whereBetween('created_at', array($start, $end))->get();
+
+    }
+
+
+        // baseado somente nos campos datas, sem nada a ver com o arquivo de pesquisa rapida
+        // RETORNANDO VALORES
+        $salesReportsGroups = DB::select('
+        SELECT SUM(sales_price + 0 ) AS total, COUNT(*) QuantitySales, AVG(sales_price) as  AVGtotalAmount,
+        SUM(sales_discount + 0) AS totalDiscount, SUM(sales_vat + 0) as totalVAT
+        FROM sales where created_at BETWEEN ? and ?', [$start, $end])[0];
+        if($salesReportsGroups->QuantitySales >  0){
+            $totalEarnings = $salesReportsGroups->total;
+            $NumberOfSales = $salesReportsGroups->QuantitySales;
+            $AVGtotalEarnings = $salesReportsGroups->AVGtotalAmount;
+            $totalVAT = $salesReportsGroups->totalVAT;
+            $totalDiscount = $salesReportsGroups->totalDiscount;
+        }
+        else{
+            // if there is no registers found
+            return redirect()
+            ->back()
+            ->with('status', 'No records was found on this range');
+            // return "nada nada nada nada..";
+
+            // retonrar ou uma section avisando ou retornar pesquisa nula
+        }
+
+        // info sales by card
+        // RETORNANDO VALORES
+        
+        $reports_sales_card = DB::select('
+        SELECT COUNT(*) AS NumberOfSales, SUM(sales_price + 0 ) as AmountSalesWithVAT,
+        SUM(sales_price - sales_vat) as AmountSalesWithoutVAT, SUM(sales_vat) as AmountSalesCardVAT, 
+        SUM(sales_discount) as AmountSalesCardDiscount
+        FROM sales
+        where methodPayment = "CARD"
+        and created_at BETWEEN ? and ?', [$start, $end])[0];
+        // $reports_sales_card = salesbycard::all()->first();
+        $AmountSalesWithVAT = $reports_sales_card->AmountSalesWithVAT; 
+        $AmountSalesWithoutVAT = $reports_sales_card->AmountSalesWithoutVAT; 
+        $AmountSalesCardVAT = $reports_sales_card->AmountSalesCardVAT; 
+        $AmountSalesCardDiscount = $reports_sales_card->AmountSalesCardDiscount; 
+        $qtdSellByCard = $reports_sales_card->NumberOfSales;
+
+        // info sales by cash
+        $reports_sales_cash = DB::select('
+        SELECT COUNT(*) AS NumberOfSalesCash, SUM(sales_price + 0 ) as AmountSalesCashWithVAT,
+        SUM(sales_price - sales_vat) as AmountSalesCashWithoutVAT, SUM(sales_vat) as AmountSalesCashVAT, SUM(sales_discount) as AmountSalesCashDiscount
+        FROM sales
+        where methodPayment = "CASH"
+        and created_at BETWEEN ? and ?', [$start, $end])[0];
+
+        // $reports_sales_cash = salesbycash::all()->first();
+        $AmountSalesCashWithVAT = $reports_sales_cash->AmountSalesCashWithVAT; 
+        $AmountSalesCashWithoutVAT = $reports_sales_cash->AmountSalesCashWithoutVAT; 
+        $AmountSalesCashVAT = $reports_sales_cash->AmountSalesCashVAT; 
+        $AmountSalesCashDiscount = $reports_sales_cash->AmountSalesCashDiscount; 
+        $qtdSellByCash = $reports_sales_cash->NumberOfSalesCash;
+
+        // return $start;
+
+        $totalEarnings = number_format($totalEarnings, 2, '.',',');
+        // $NumberOfSales = number_format($NumberOfSales, 2, '.',',');
+        $AVGtotalEarnings = number_format($AVGtotalEarnings, 2, '.',',');
+        $totalVAT = number_format($totalVAT, 2, '.',',');
+        $totalDiscount = number_format($totalDiscount, 2, '.',',');
+        $AmountSalesWithVAT = number_format($AmountSalesWithVAT, 2, '.',',');
+        $AmountSalesWithoutVAT = number_format($AmountSalesWithoutVAT, 2, '.',',');
+        // $qtdSellByCard = number_format($qtdSellByCard, 2, '.',',');
+        // $reports_sales_cash = number_format($reports_sales_cash, 2, '.',',');
+        $AmountSalesCashWithVAT = number_format($AmountSalesCashWithVAT, 2, '.',',');;
+        $AmountSalesCashWithoutVAT = number_format($AmountSalesCashWithoutVAT, 2, '.',',');
+        $AmountSalesCashDiscount = number_format($AmountSalesCashDiscount, 2, '.',',');
+        // $qtdSellByCash = number_format($qtdSellByCash, 2, '.',',');
+        $AmountSalesCardVAT = number_format($AmountSalesCardVAT, 2, '.',',');
+        $AmountSalesCardDiscount = number_format($AmountSalesCardDiscount, 2, '.',',');
+
+
+
+        return view('sections.reports.sales.index',
+        compact('totalEarnings', 'NumberOfSales', 'AVGtotalEarnings', 
+        'totalVAT',  'totalDiscount', 'AmountSalesWithVAT','AmountSalesWithoutVAT', 'qtdSellByCard', 'reports_sales_cash',
+        'AmountSalesCashWithVAT', 'AmountSalesCashWithoutVAT', 'AmountSalesCashVAT', 'AmountSalesCashDiscount','qtdSellByCash',
+        'qtdSellByCash', 'AmountSalesCardVAT', 'AmountSalesCardDiscount', 'start', 'end'));
+    }
+}
+
+    public function searchajax(Request $request)
+    {
+              $start =  $request->dataComecoPadraoDateTime;
+              $end = $request->dataFimPadraoDateTime;
+
+      
+              // baseado somente nos campos datas, sem nada a ver com o arquivo de pesquisa rapida
+              // RETORNANDO VALORES
+              $salesReportsGroups = DB::select('
+              SELECT SUM(sales_price + 0 ) AS total, COUNT(*) QuantitySales, AVG(sales_price) as  AVGtotalAmount,
+              SUM(sales_discount + 0) AS totalDiscount, SUM(sales_vat + 0) as totalVAT
+              FROM sales where created_at BETWEEN ? and ?', [$start, $end])[0];
+              if($salesReportsGroups->QuantitySales >  0){
+                  $totalEarnings = $salesReportsGroups->total;
+                  $NumberOfSales = $salesReportsGroups->QuantitySales;
+                  $AVGtotalEarnings = $salesReportsGroups->AVGtotalAmount;
+                  $totalVAT = $salesReportsGroups->totalVAT;
+                  $totalDiscount = $salesReportsGroups->totalDiscount;
+              }
+              else{
+                  // if there is no registers found
+                //   return redirect()
+                //   ->back()
+                //   ->with('status', 'No records was found on this range');
+                return "NDA";
+      
+                  // retonrar ou uma section avisando ou retornar pesquisa nula
+              }
+              
+
+            // info sales by card
+            // RETORNANDO VALORES
+            
+            $reports_sales_card = DB::select('
+            SELECT COUNT(*) AS NumberOfSales, SUM(sales_price + 0 ) as AmountSalesWithVAT,
+            SUM(sales_price - sales_vat) as AmountSalesWithoutVAT, SUM(sales_vat) as AmountSalesCardVAT, 
+            SUM(sales_discount) as AmountSalesCardDiscount
+            FROM sales
+            where methodPayment = "CARD"
+            and created_at BETWEEN ? and ?', [$start, $end])[0];
+            // $reports_sales_card = salesbycard::all()->first();
+            $AmountSalesWithVAT = $reports_sales_card->AmountSalesWithVAT; 
+            $AmountSalesWithoutVAT = $reports_sales_card->AmountSalesWithoutVAT; 
+            $AmountSalesCardVAT = $reports_sales_card->AmountSalesCardVAT; 
+            $AmountSalesCardDiscount = $reports_sales_card->AmountSalesCardDiscount; 
+            $qtdSellByCard = $reports_sales_card->NumberOfSales;
+
+            // info sales by cash
+            $reports_sales_cash = DB::select('
+            SELECT COUNT(*) AS NumberOfSalesCash, SUM(sales_price + 0 ) as AmountSalesCashWithVAT,
+            SUM(sales_price - sales_vat) as AmountSalesCashWithoutVAT, SUM(sales_vat) as AmountSalesCashVAT, SUM(sales_discount) as AmountSalesCashDiscount
+            FROM sales
+            where methodPayment = "cash"
+            and created_at BETWEEN ? and ?', [$start, $end])[0];
+
+            // $reports_sales_cash = salesbycash::all()->first();
+            $AmountSalesCashWithVAT = $reports_sales_cash->AmountSalesCashWithVAT; 
+            $AmountSalesCashWithoutVAT = $reports_sales_cash->AmountSalesCashWithoutVAT; 
+            $AmountSalesCashVAT = $reports_sales_cash->AmountSalesCashVAT; 
+            $AmountSalesCashDiscount = $reports_sales_cash->AmountSalesCashDiscount; 
+            $qtdSellByCash = $reports_sales_cash->NumberOfSalesCash;
+
+            
+            $totalEarnings = number_format($totalEarnings, 2, '.',',');
+            // $NumberOfSales = number_format($NumberOfSales, 2, '.',',');
+            $AVGtotalEarnings = number_format($AVGtotalEarnings, 2, '.',',');
+            $totalVAT = number_format($totalVAT, 2, '.',',');
+            $totalDiscount = number_format($totalDiscount, 2, '.',',');
+            $AmountSalesWithVAT = number_format($AmountSalesWithVAT, 2, '.',',');
+            $AmountSalesWithoutVAT = number_format($AmountSalesWithoutVAT, 2, '.',',');
+            // $qtdSellByCard = number_format($qtdSellByCard, 2, '.',',');
+            // $reports_sales_cash = number_format($reports_sales_cash, 2, '.',',');
+            $AmountSalesCashWithVAT = number_format($AmountSalesCashWithVAT, 2, '.',',');;
+            $AmountSalesCashWithoutVAT = number_format($AmountSalesCashWithoutVAT, 2, '.',',');
+            $AmountSalesCashDiscount = number_format($AmountSalesCashDiscount, 2, '.',',');
+            // $qtdSellByCash = number_format($qtdSellByCash, 2, '.',',');
+            $AmountSalesCardVAT = number_format($AmountSalesCardVAT, 2, '.',',');
+            $AmountSalesCardDiscount = number_format($AmountSalesCardDiscount, 2, '.',',');
+
+
+            $totalEarnings == null ? $totalEarnings =  0 : $totalEarnings;
+            $NumberOfSales == null ? $NumberOfSales =  0 : $NumberOfSales;
+            $AVGtotalEarnings == null ? $AVGtotalEarnings =  0 : $AVGtotalEarnings;
+            $totalVAT == null ? $totalVAT = 0 : $totalVAT;
+            $totalDiscount == null ? $totalDiscount =  0 : $totalDiscount;
+            $AmountSalesWithVAT == null ? $AmountSalesWithVAT =  0 : $AmountSalesWithVAT;
+            $AmountSalesWithoutVAT == null ? $AmountSalesWithoutVAT =  0 : $AmountSalesWithoutVAT;
+            $qtdSellByCard == null ? $qtdSellByCard =  0 : $qtdSellByCard;
+            $reports_sales_cash == null ? $reports_sales_cash =  0 : $reports_sales_cash;
+            $AmountSalesCashWithVAT == null ? $AmountSalesCashWithVAT =  0 : $AmountSalesCashWithVAT;
+            $AmountSalesCashWithoutVAT == null ? $AmountSalesCashWithoutVAT =  0 : $AmountSalesCashWithoutVAT;
+            $AmountSalesCashVAT == null ? $AmountSalesCashVAT =  0 : $AmountSalesCashVAT;
+            $AmountSalesCashDiscount == null ? $AmountSalesCashDiscount =  0 : $AmountSalesCashDiscount;
+            $qtdSellByCash == null ? $qtdSellByCash =  0 : $qtdSellByCash;
+            $AmountSalesCardVAT == null ? $AmountSalesCardVAT =  0 : $AmountSalesCardVAT;
+            $AmountSalesCardDiscount == null ? $AmountSalesCardDiscount =  0 : $AmountSalesCardDiscount;
+
+            $start = date('d-m-Y', strtotime($start));
+            $end = date('d-m-Y', strtotime($end));
+
+
+            //   return $datasFound=[$totalEarnings, $NumberOfSales, $AVGtotalEarnings ];
+             return $datasFound = ['totalEarnings' => $totalEarnings,
+              'NumberOfSales' => $NumberOfSales,
+              'AVGtotalEarnings' => $AVGtotalEarnings,
+              'totalVAT' => $totalVAT,
+              'totalDiscount' => $totalDiscount,
+              'AmountSalesWithVAT' => $AmountSalesWithVAT,
+              'AmountSalesWithoutVAT' => $AmountSalesWithoutVAT,
+              'qtdSellByCard' => $qtdSellByCard,
+              'reports_sales_cash' => $reports_sales_cash,
+              'AmountSalesCashWithVAT' => $AmountSalesCashWithVAT,
+              'AmountSalesCashWithoutVAT' => $AmountSalesCashWithoutVAT,
+              'AmountSalesCashVAT' => $AmountSalesCashVAT,
+              'AmountSalesCashDiscount' => $AmountSalesCashDiscount,
+              'qtdSellByCash' => $qtdSellByCash,
+              'AmountSalesCardVAT' => $AmountSalesCardVAT,
+              'AmountSalesCardDiscount' => $AmountSalesCardDiscount,
+              'start' => $start,
+              'end' => $end,
+              ];
+
+              
+      
+              return view('sections.reports.sales.index',
+              compact('totalEarnings', 'NumberOfSales', 'AVGtotalEarnings', 
+              'totalVAT',  'totalDiscount', 'AmountSalesWithVAT','AmountSalesWithoutVAT', 'qtdSellByCard', 'reports_sales_cash',
+              'AmountSalesCashWithVAT', 'AmountSalesCashWithoutVAT', 'AmountSalesCashVAT', 'AmountSalesCashDiscount','qtdSellByCash',
+              'qtdSellByCash', 'AmountSalesCardVAT', 'AmountSalesCardDiscount', 'start', 'end'));
+    }
+
+
+    public function salesreportsmonthly()
+    {
+                //  $products = productsSales::all();
+                // $salesreportsmonthly = productsBestSellerByCategory::orderBy('totalNproducts', 'DESC')->get();
+
+                // $salesreportsmonthly = salesreportsmonthly::orderBy('totalSalesAmount', 'DESC')->get();
+                // $salesreportsmonthly = salesreportsmonthly::all();
+
+                 $salesreportsmonthly = DB::select('
+                SELECT * FROM salesreportsmonthly ORDER BY created_at ASC');
+
+
+                // $JanValue = DB::select('
+                // SELECT totalSalesVAT FROM salesreportsmonthly WHERE monthSales = 1 ORDER BY created_at ASC');
+
+                // $FevValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 2 ORDER BY created_at ASC ')[0];
+            
+
+                // $MarchValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 3 ORDER BY created_at ASC ')[0];
+                // $MarchValue = $MarchValue->totalSalesVAT;
+
+                
+                // $AprilValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 4 ORDER BY created_at ASC ')[0];
+                // $AprilValue = $AprilValue->totalSalesVAT;
+
+                // $MayValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 5 ORDER BY created_at ASC ')[0];
+                // $MayValue = $MayValue->totalSalesVAT;
+
+
+                // $JuneValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 6 ORDER BY created_at ASC ')[0];
+                // $JuneValue = $JuneValue->totalSalesVAT;
+
+
+                // $JulyValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 7 ORDER BY created_at ASC ')[0];
+                // $JulyValue = $JulyValue->totalSalesVAT;
+
+
+                // $AugustValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 8 ORDER BY created_at ASC ')[0];
+                // $AugustValue = $AugustValue->totalSalesVAT;
+
+
+                // $SeptemberValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 9 ORDER BY created_at ASC ')[0];
+                // $SeptemberValue = $SeptemberValue->totalSalesVAT;
+
+
+                // $OctoberValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 10 ORDER BY created_at ASC ')[0];
+                // $OctoberValue = $OctoberValue->totalSalesVAT;
+
+
+                // $NovemberValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 11 ORDER BY created_at ASC ')[0];
+                // $NovemberValue = $NovemberValue->totalSalesVAT;
+
+
+                // $DezemberValue = DB::select('
+                // SELECT * FROM salesreportsmonthly WHERE monthSales = 12 ORDER BY created_at ASC ')[0];
+                // $DezemberValue = $DezemberValue->totalSalesVAT;
+
+                // $a = 1;
+
+                // //  if ($FevValue == null || $FevValue == '' ){
+                // //     return 1;
+                // // }
+                // //  else{
+                // //     return 2;
+                // // }
+
+                //  $JanValue == null ? $JanValue =  0 : $JanValue = $JanValue;
+                //  $FevValue == null ? $FevValue =  0 : $FevValue = $FevValue;
+                //  $MarchValue == null ? $MarchValue =  0 : $MarchValue = $MarchValue;
+                //  $AprilValue == null ? $AprilValue =  0 : $AprilValue = $AprilValue;
+                //  $MayValue == null ? $MayValue = 0 : $MayValue = $MayValue;
+                //  $JuneValue == null ? $JuneValue =  0 : $JuneValue = $JuneValue;
+                //  $JulyValue == null ? $JulyValue =  0 : $JulyValue = $JulyValue;
+                //  $AugustValue == null ? $AugustValue =  0 : $AugustValue = $AugustValue;
+                //  $SeptemberValue == null ? $SeptemberValue =  0 : $SeptemberValue = $SeptemberValue;
+                //  $OctoberValue == null ? $OctoberValue =  0 : $OctoberValue = $OctoberValue;
+                //  $NovemberValue == null ? $NovemberValue =  0 : $NovemberValue = $NovemberValue;
+                //  $DezemberValue == null ? $DezemberValue =  0 : $DezemberValue = $DezemberValue;
+                
+                //  $monthValue=[$JanValue, $FevValue, $MarchValue, $AprilValue, $MayValue, $JuneValue, $JulyValue, $AugustValue, $SeptemberValue, $OctoberValue, $NovemberValue, $DezemberValue];
+
+        
+        
+        
+                // $products = \DB::table('products')
+                // ->select('products.*')
+                // ->orderBy('id','DESC')
+                // ->get();
+                // $results = DB::select('select * from products_sales where id = ?', [1]);
+        
+                /*query de exemplo 
+                CREATE VIEW productsBestSellerByQuantities AS 
+                SELECT  ProductId , COUNT(*) as totalNproducts, name, SKU, category, sales_price, Cost_Price, sales_discount, sales_vat, SUM(sales_price  + 0) as AmountSalesSell
+                from products_sales
+                GROUP BY ProductId ;
+                */
+        
+                // $products = DB::select('select COUNT(*) as totalNproducts, name, SKU, category from  sales');
+        
+        
+                // JSON format for Js can read this data
+                // 200 means good reponses
+                return response(json_encode($salesreportsmonthly), 200) ;
+    }
+}

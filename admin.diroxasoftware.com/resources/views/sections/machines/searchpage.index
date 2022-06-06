@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>DIROXA SOFTWARE</title>
+
+  <!-- Custom fonts for this template -->
+  <link href="{{ asset('admlyt/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="{{ asset('admlyt/css/sb-admin-2.min.css') }}" rel="stylesheet">
+
+  <!-- Custom styles for this page -->
+  <link href="{{ asset('admlyt/vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+
+  <style>
+        thead input {
+           width: 100%;
+        }
+
+        input {
+          width: 10%;
+        }
+    </style>
+
+</head>
+
+
+     <span>
+            @include('sections.components.topnavbar')
+      </span>
+
+
+      @if($thisCustomerStatus != 0)
+        <?php $from = "customerindexMachine"; ?>
+      @else
+        <?php $from = "indexMachine"; ?>
+      @endif
+
+              <!-- Begin Page Content -->
+              <div class="container-fluid">
+
+              @if(session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+              @endif
+
+              @if(session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+              @endif
+
+      @if($thisCustomerStatus != 0)
+          <span>
+                @include('sections.components.topnavbaroverviewcustomers')
+          </span>
+      @endif
+
+        <!-- Begin Page Content -->
+        <div class="container-fluid">
+        @if($thisCustomerStatus != 0)
+            <!-- Page Heading -->
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-black-800" style="color:black!important;"><strong> All {{$thisCustomer->name}}'s Motorcycles</strong></h1>
+                <a href="/section/customers/createmachineonviewpage/{{$thisCustomer->id}}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                        class="fas fa-plus fa-sm text-white-50"></i> <b>ADD MOTORCYCLES</b></a>
+            </div>
+            <!-- DataTales Example -->
+            @else
+              <div class="d-sm-flex align-items-center justify-content-between mb-4">
+              <h1 class="h3 mb-0 text-black-800" style="color:black!important;"><strong> CUSTOMER'S Motorcycles</strong></h1>
+                  <a href="/section/machines/nocustomers/create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                          class="fas fa-plus fa-sm text-white-50"></i> <b>ADD MOTORCYCLES</b></a>
+              </div>
+            @endif
+
+            <div class="container=fluid p-3">
+                <h4 class="text-center"> Datatable Column Filter </h4>
+                <table class="table table-bordered" id="mytable">
+                <form  id="myForm" enctype="multipart/form-data" action="/section/machines/machinesfilter" method="POST">
+                    @csrf
+                    <thead>
+                        <th> 
+                          <p>Serial Number</p>
+                          <input type="text" id="serial_number" name="serial_number">
+                        </th>
+                        <th>
+                          <p>Model</p>
+                          <input type="text" id="model" name="model">
+                        </th>
+                        <th>
+                          <p>Brand</p>
+                          <input type="text" id="brand" name="brand">
+                        </th>
+                        <th>
+                          <p>Owner</p>
+                          <input type="text" id="owner" name="owner">
+                        </th>
+                        <th>
+                          <p>Created At</p>
+                          <input type="text" id="created_at" name="created_at" placeholder="14/03/2001 format">
+                        </th>
+                        <th>
+                          <p>Actions</p>
+                          <input type="text" hidden>
+                         <button type="button" class="btn btn-success" id="searchBtn" name="searchBtn" >Search</button>
+                  </form> 
+                        </th>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                           <td>1</td>
+                           <td>2</td>
+                           <td>3</td>
+                           <td>4</td>
+                           <td>5</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /.container-fluid -->
+
+      </div>
+      </div>
+      <!-- End of Main Content -->
+
+
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+  </div>
+  <!-- End of Page Wrapper -->
+
+  <!-- Scroll to Top Button-->
+  <a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+  </a>
+
+  <!-- Logout Modal-->
+  <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
+          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+          <a class="btn btn-primary" href="login.html">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  
+<script>
+      $(document).ready(function(){
+
+            // $('#ajaxSubmit').click(function(e){
+              $(document).on("change", "#searchBox", function(e){
+                var inputSearch = searchBox.value;
+
+                var newtotalvalue = document.title = total.replace('£/. ', ''); // vai mudar o titulo removendo "STACK"
+                document.getElementById('firstAmountPaid').value = newtotalvalue; 
+
+                // alert(inputSearch);
+                // var comboCidades = $('#mselect option:selected').val();
+
+               e.preventDefault();
+               $.ajaxSetup({
+                  headers: {
+                      'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content')
+                  }
+              });
+               $.ajax({
+                  url: "{{ url('/home/searchingProductsAjax') }}",
+                  method: 'post',
+                  data: {
+                     data: inputSearch,
+                     _token: '{{csrf_token()}}'},
+
+                  success: function(result){
+
+                    $resp = result;
+                    // console.log($resp);
+
+                    if($resp == 0){
+                        alert('Nothing was found matching this datas');
+                        $('#dataTable').empty();
+                        $("#tableTitle").addClass("d-none")
+                        document.getElementById('searchBox').value = '';
+                    }
+
+                    else{
+
+                    //   $("#tableTitle").removeClass("d-none")
+                    //   $('#dataTable').empty();
+
+                    $('.categoriesOptions').empty();
+                        $resp = result;
+                        // console.log(result);
+
+                        $.each($resp, function (key, value){
+                        var sellpriceformated = (value.Sell_PriceVat).toFixed(2);
+                        $(".categoriesOptions").append(`
+                        <option value="`+ value.id + `">`+ value.name + "| Price with Vat:  £" + sellpriceformated + `</option>
+                    `);
+                  });
+                  } // fim do else
+                  },
+                  error: function(jqXHR, textStatus, errorThrown, result) {
+                      // console.log(jqXHR.responseJSON.errors)
+                      Alert('Some ERROR try again');
+                      $msg = 'oi';
+                      $resp = jqXHR.responseJSON.errors;
+                      $('.dataTable').empty();
+                      $('.invalidData').empty();
+                      $.each($resp, function (key, value){
+                      $(".invalidData").append(`
+                          <div class="alert alert-danger">
+                              <ul>
+                                <li>`+ value +`</li>
+                              </ul>
+                          </div>
+                    `);
+                  });
+                  }
+                  });
+               });
+            });
+
+      function zeroFill(n){
+          return n < 9? `0${n}` : `${n}`;
+      }
+
+      function  formatDate(date){
+          const d = zeroFill(date.getDate());
+          const mo = zeroFill(date.getMonth() + 1);
+          const y = zeroFill(date.getFullYear());
+          const h = zeroFill(date.getHours());
+          const mi = zeroFill(date.getMinutes());
+          const s = zeroFill(date.getSeconds());
+
+          return `${d}/${mo}/${y}`;
+      }
+
+</script>
+
+
+<script>
+      $(document).ready(function(){
+         alert(1);
+            // $('#ajaxSubmit').click(function(e){
+              $(document).on("click", "#searchBtn", function(e){
+
+                alert(777);
+                var inputSearch2 = searchBox2.value;
+                // alert(inputSearch2);
+                var paymentsOptions = $('#paymentsOptions option:selected').val();
+                let allpaymentsDates = [];
+
+                // var todayDate  = new Date();
+
+
+                e.preventDefault();
+                // <input type="text" id="primeiraDatadoPagamento" name="primeiraDatadoPagamento" value="0">
+
+              
+                if(paymentsOptions == "PAYING TODAY"){
+
+                        $('#upfrontsection').empty();
+                        $('.NumberPayments').empty();
+                        $('.datePayments').empty();
+                        $("#upfrontsection").classList.add("d-none");
+                        $("#intialpaymentsDateSection").classList.add("d-none");
+                        $("#intialpaymentsDateSection").removeClass("d-none");
+
+
+                        $("#upfrontsection").append(`
+                                    <div class="form-group col-md-12" hidden>
+                                        <input type="number"  id="upfront" class="form-control" min="0"  value="0">
+                                    </div>
+                    `);
+
+                        
+                        var todayDate = $('#finalPaymentFix').val();
+                        var firstAmountPaid = $('#firstAmountPaid').val();
+                        document.getElementById('finalPayment').value = todayDate;
+                        // var newtotalvalue = document.title = total.replace('£/. ', ''); // vai mudar o titulo removendo "STACK"
+                        // document.getElementById('firstAmountPaid').value = newtotalvalue;
+                        allpaymentsDates.push(todayDate);
+                        // alert(allpaymentsDates);
+
+                        $(".NumberPayments").append(`
+                                    <input id="upfrontBox" name="upfrontBox"  id="upfrontBox"   hidden
+                                        value="1"
+                                        placeholder="NumberPayments" class="form-control" type="text"
+                                        required>
+                            `);
+                }
+
+                else {
+                
+                    $('.NumberPayments').empty();
+                    $('.upfrontinicial').empty();
+
+                    $('#upfrontsection').empty();
+
+                    $("#upfrontsection").append(`
+                            <label for="" style="color:black;"><b> Upfront: </b></label>
+                                    <div class="form-group col-md-12">
+                                        <input type="number"  id="upfront" class="form-control" min="0"  value="0">
+                                    </div>
+                    `);
+
+                        
+                        $(".NumberPayments").append(`
+                     
+                            <label> Number of Payments? </label>
+                                <input id="upfrontBox" name="upfrontBox"  id="upfrontBox"  
+                                    value="1"
+                                    placeholder="NumberPayments" class="form-control" type="text"
+                                    required>
+                        `);
+
+                        var Npayments = upfrontBox.value;
+                        total = document.getElementById("total").value;
+                        var newtotalvalue = document.title = total.replace('£/. ', ''); // vai mudar o titulo removendo "STACK"
+                        upfront = document.getElementById("upfront").value;
+                        var newValueWithUpfront = newtotalvalue - upfront;
+                        var tot = newValueWithUpfront / Npayments;
+
+                        // alert(tot);
+
+                        const date = new Date();
+
+                        // var dateFormated = formatDate(date);
+
+                        // alert(123);
+                        if(paymentsOptions == "PAYING WEEKLY"){
+                        // alert(7777);
+
+                        $('.Npayments').empty();
+                        $('.datePayments').empty();
+                        $("#upfrontsection").removeClass("d-none");
+                        $("#intialpaymentsDateSection").removeClass("d-none");
+
+                   
+
+                        for(a =0; a<=Npayments-1; a++){
+                            newA = Number(a+1);
+                            newTot = Number(tot).toFixed(2);
+
+                            if(a == 0){
+                                const date = new Date();
+                                var dateFormated = formatDate(date);
+                            }
+                            else{
+                                formatedDate = date.setDate(date.getDate() + 7);
+                                var dateFormated = formatDate(date);
+                            }
+
+                            
+                            document.getElementById('finalPayment').value = dateFormated;
+                            document.getElementById('firstAmountPaid').value = newTot;
+                            allpaymentsDates.push(dateFormated);
+                            // alert(allpaymentsDates);
+          
+
+                            $(".datePayments").append(`
+                                    <ul>
+                                        <li> Amount: £`+ newTot   +`| `+ newA +`º payment will be: `+ dateFormated + `</li>
+                                    </ul>
+                                `);
+
+                                
+
+                       
+                        }
+                    }
+
+                    else if(paymentsOptions == "PAYING MONTHLY"){
+
+                        $('.datePayments').empty();
+                        $('.Npayments').empty();
+                        $("#upfrontsection").removeClass("d-none");
+                        $("#intialpaymentsDateSection").removeClass("d-none");
+
+
+
+                        for(a =0; a<=Npayments-1; a++){
+                            newA = Number(a+1);
+                            newTot = Number(tot).toFixed(2);
+
+                            if(a == 0){
+                                const date = new Date();
+                                var dateFormated = formatDate(date);
+                            }
+                            else{
+                                formatedDate = date.setMonth(date.getMonth() + 1);
+                                var dateFormated = formatDate(date);
+                            }
+
+
+                            document.getElementById('finalPayment').value = dateFormated;
+                            document.getElementById('firstAmountPaid').value = newTot;
+                            allpaymentsDates.push(dateFormated);
+
+                            // alert(allpaymentsDates);
+
+                            $(".datePayments").append(`
+                                <ul>
+                                    <li> Amount: £`+ newTot   +`| `+ newA +`º payment will be: `+ dateFormated + `</li>
+                                </ul>
+                            `);
+                        }
+                     }
+                }
+               });
+            });
+</script>
+
+
+  <!-- Bootstrap core JavaScript-->
+  <script src="{{ asset('admlyt/vendor/jquery/jquery.min.js') }}"></script>
+  <script src="{{ asset('admlyt/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+
+  <!-- Core plugin JavaScript-->
+  <script src="{{ asset('admlyt/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
+
+  <!-- Custom scripts for all pages-->
+  <script src="{{ asset('admlyt/js/sb-admin-2.min.js') }}"></script>
+
+  <!-- Page level plugins -->
+
+  <script src="{{ asset('admlyt/vendor/datatables/jquery.dataTables.min.js') }}"></script>
+  <script src="{{ asset('admlyt/vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
+
+
+  <!-- Page level custom scripts -->
+  <script src="{{ asset('admlyt/js/demo/datatables-demo.js') }}"></script>
+
+</body>
+
+</html>
